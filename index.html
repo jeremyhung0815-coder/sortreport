@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>排序演算法視覺化專題首頁</title>
+  <title>排序演算法視覺化首頁</title>
   <style>
     * {
       box-sizing: border-box;
@@ -18,26 +18,26 @@
     }
 
     .container {
-      max-width: 1000px;
+      max-width: 1100px;
       margin: 0 auto;
       background: #ffffff;
+      padding: 40px 30px;
       border-radius: 18px;
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-      padding: 40px 30px;
     }
 
     h1 {
       text-align: center;
       color: #333;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
       font-size: 2.2rem;
     }
 
     .subtitle {
       text-align: center;
       color: #666;
-      margin-bottom: 35px;
       line-height: 1.8;
+      margin-bottom: 35px;
       font-size: 1rem;
     }
 
@@ -48,8 +48,8 @@
     }
 
     .card {
-      background: #f9fbff;
-      border: 1px solid #dbe7f3;
+      background: #f8fbff;
+      border: 1px solid #d9e6f2;
       border-radius: 14px;
       padding: 22px 18px;
       transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -64,16 +64,17 @@
       margin-top: 0;
       color: #222;
       font-size: 1.2rem;
+      margin-bottom: 10px;
     }
 
     .card p {
       color: #555;
       line-height: 1.7;
       font-size: 0.95rem;
-      min-height: 85px;
+      min-height: 95px;
     }
 
-    .card a {
+    .btn {
       display: inline-block;
       text-decoration: none;
       background: #007BFF;
@@ -84,7 +85,7 @@
       transition: background 0.2s ease;
     }
 
-    .card a:hover {
+    .btn:hover {
       background: #0056b3;
     }
 
@@ -115,7 +116,7 @@
   <div class="container">
     <h1>排序演算法視覺化專題</h1>
     <p class="subtitle">
-      本網站展示五種常見排序演算法的互動式視覺化過程，<br>
+      本網站展示五種常見排序演算法的互動式視覺化頁面，<br>
       包含 Bubble Sort、Selection Sort、Insertion Sort、Merge Sort 與 Quick Sort。
     </p>
 
@@ -123,52 +124,51 @@
       <div class="card">
         <h2>Bubble Sort</h2>
         <p>
-          透過反覆比較相鄰元素，將較大的值一步步推到右側。
-          是最直觀、最容易理解的基礎排序法之一。
+          透過反覆比較相鄰元素，讓較大的值逐步往右移動，
+          是最直觀、最容易理解的基礎排序方法之一。
         </p>
-        <a href="bubble_sort.html">進入頁面</a>
+        <a class="btn" href="bubble_sort.html">進入頁面</a>
       </div>
 
       <div class="card">
         <h2>Selection Sort</h2>
         <p>
           每一輪從未排序區中找出最小值，
-          再與前方位置交換，逐步擴大已排序區。
+          再與前方位置交換，逐步完成整體排序。
         </p>
-        <a href="selection_sort.html">進入頁面</a>
+        <a class="btn" href="selection_sort.html">進入頁面</a>
       </div>
 
       <div class="card">
         <h2>Insertion Sort</h2>
         <p>
-          將元素逐一插入前面已排序好的區間中，
-          適合觀察「插入」與「位移」的排序思維。
+          將元素一個一個插入到前方已排序區間中，
+          適合觀察位移與插入位置的變化。
         </p>
-        <a href="insertion_sort.html">進入頁面</a>
+        <a class="btn" href="insertion_sort.html">進入頁面</a>
       </div>
 
       <div class="card">
         <h2>Merge Sort</h2>
         <p>
-          採用分治法，先把資料拆分成小區段，
-          再依序合併回來，是經典的 O(n log n) 排序法。
+          使用分治法，先將資料拆分成小區段，
+          再依序合併回來，是經典的高效率排序法。
         </p>
-        <a href="merge_sort.html">進入頁面</a>
+        <a class="btn" href="merge_sort.html">進入頁面</a>
       </div>
 
       <div class="card">
         <h2>Quick Sort</h2>
         <p>
-          選擇 pivot 作為基準，經過 partition 把資料分成左右兩邊，
-          再遞迴排序，是效率很高的經典演算法。
+          選擇 pivot 作為基準，經過 partition 將資料分成左右兩側，
+          再遞迴完成排序。
         </p>
-        <a href="quick_sort.html">進入頁面</a>
+        <a class="btn" href="quick_sort.html">進入頁面</a>
       </div>
     </div>
 
     <div class="footer">
-      Sorting Algorithm Visualizer Project<br>
-      GitHub Pages 專題首頁
+      Sorting Algorithm Visualization Project
     </div>
   </div>
 </body>
