@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Insertion Sort Studio</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #151c31;
+      --panel-2: #0f1628;
+      --line: #273454;
+      --text: #e7eefc;
+      --muted: #9fb0d1;
+      --main: #8b7dff;
+      --main-2: #6ca8ff;
+      --focus: #ffd166;
+      --move: #ff7a90;
+      --done: #59d98e;
+      --shadow: 0 18px 40px rgba(0,0,0,.28);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, "Microsoft JhengHei", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top right, rgba(139,125,255,.16), transparent 24%),
+        radial-gradient(circle at bottom left, rgba(108,168,255,.12), transparent 24%),
+        var(--bg);
+      min-height: 100vh;
+    }
+
+    .wrap {
+      width: min(1140px, calc(100% - 32px));
+      margin: 28px auto 40px;
+    }
+
+    .hero, .panel {
+      background: rgba(21,28,49,.95);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      padding: 28px;
+      background: linear-gradient(135deg, rgba(139,125,255,.18), rgba(108,168,255,.10));
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(1.9rem, 3vw, 2.7rem);
+      letter-spacing: .04em;
+    }
+
+    .hero p {
+      margin: 12px 0 0;
+      color: var(--muted);
+      line-height: 1.85;
+      max-width: 800px;
+    }
+
+    .grid {
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 20px;
+    }
+
+    .panel { padding: 22px; }
+    .panel h2 {
+      margin: 0 0 16px;
+      font-size: 1.08rem;
+      letter-spacing: .03em;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      min-width: 230px;
+      border: 1px solid #334467;
+      border-radius: 12px;
+      background: #0b1323;
+      color: var(--text);
+      padding: 12px 14px;
+      font-size: .95rem;
+      outline: none;
+    }
+
+    input[type="range"] {
+      width: 190px;
+      accent-color: var(--main);
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 11px 16px;
+      font-size: .94rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .12s ease, opacity .18s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+    .btn-main { background: var(--main); color: white; }
+    .btn-sub { background: #253556; color: var(--text); }
+    .btn-good { background: var(--done); color: #072514; }
+    .btn-stop { background: var(--move); color: #2f0a12; }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    .viz {
+      margin-top: 14px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+      padding: 18px 16px 12px;
+    }
+
+    .bars {
+      height: 340px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 8px 4px;
+    }
+
+    .node {
+      min-width: 50px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+      flex-shrink: 0;
+    }
+
+    .num {
+      font-size: .82rem;
+      font-weight: 700;
+      color: #d8e5ff;
+    }
+
+    .bar {
+      width: 50px;
+      border-radius: 14px 14px 6px 6px;
+      background: linear-gradient(180deg, var(--main-2), var(--main));
+      transition: height .2s ease, transform .18s ease, filter .18s ease;
+      position: relative;
+      box-shadow: inset 0 -8px 16px rgba(0,0,0,.12);
+    }
+
+    .bar::after {
+      content: "";
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      top: 8px;
+      height: 22%;
+      border-radius: 999px;
+      background: rgba(255,255,255,.12);
+    }
+
+    .bar.key {
+      background: linear-gradient(180deg, var(--focus), #f6b940);
+      transform: translateY(-6px);
+    }
+
+    .bar.scan {
+      background: linear-gradient(180deg, #8ee3ff, #3fb7da);
+      transform: translateY(-4px);
+    }
+
+    .bar.shift {
+      background: linear-gradient(180deg, var(--move), #ef607a);
+      transform: translateY(-8px);
+    }
+
+    .bar.sorted {
+      background: linear-gradient(180deg, var(--done), #35b96f);
+    }
+
+    .idx {
+      color: #7388ad;
+      font-size: .75rem;
+    }
+
+    .msg {
+      margin-top: 16px;
+      background: #0b1323;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 16px;
+      min-height: 60px;
+      line-height: 1.8;
+      color: #dce8ff;
+    }
+
+    .legend {
+      margin-top: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .stat, .box {
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+    }
+
+    .stat .k {
+      font-size: .84rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .stat .v {
+      font-size: 1.6rem;
+      font-weight: 800;
+    }
+
+    .box ul {
+      margin: 0;
+      padding-left: 20px;
+      color: var(--muted);
+      line-height: 1.9;
+    }
+
+    .log {
+      height: 250px;
+      overflow: auto;
+      white-space: pre-wrap;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: .84rem;
+      color: #c2d2f7;
+      line-height: 1.8;
+    }
+
+    .complexity {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .complexity th,
+    .complexity td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+    }
+
+    .complexity th {
+      background: #0b1323;
+      color: #cfe0ff;
+    }
+
+    .complexity td { color: var(--muted); }
+
+    .note {
+      margin-top: 14px;
+      color: #7f95bd;
+      line-height: 1.8;
+      font-size: .92rem;
+    }
+
+    @media (max-width: 930px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 640px) {
+      .wrap { width: min(100% - 20px, 1000px); }
+      .hero, .panel { padding: 18px; }
+      .bar, .node { width: 40px; min-width: 40px; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <h1>Insertion Sort Studio</h1>
+      <p>
+        這版是插入排序的互動式視覺化。核心邏輯不是「一路把最大值往右推」，而是每次挑出一個 <strong>key</strong>，
+        往左掃描已排序區，把比它大的元素往右移，最後把 key 插進正確位置。
+        所以你會看到這份程式的動畫重點改成：<strong>選 key、向左比較、右移元素、插回空位</strong>。
+      </p>
+    </section>
+
+    <section class="grid">
+      <section class="panel">
+        <h2>互動視覺化</h2>
+        <div class="row">
+          <input id="numbers" type="text" value="29, 10, 14, 37, 13, 8, 22" />
+          <button id="resetBtn" class="btn-main">重設</button>
+          <button id="randomBtn" class="btn-sub">隨機資料</button>
+        </div>
+        <div class="row">
+          <span class="tag">速度 <strong id="speedText">650 ms</strong></span>
+          <input id="speed" type="range" min="150" max="1200" value="650" step="50" />
+          <button id="runBtn" class="btn-good">開始</button>
+          <button id="stopBtn" class="btn-stop" disabled>停止</button>
+          <button id="stepBtn" class="btn-sub">單步</button>
+        </div>
+
+        <div class="viz">
+          <div id="bars" class="bars"></div>
+          <div id="message" class="msg">插入排序會把左邊視為已排序區，從第 2 個元素開始，逐一插入到正確位置。</div>
+          <div class="legend">
+            <span class="tag"><span class="dot" style="background: var(--focus)"></span> key 值</span>
+            <span class="tag"><span class="dot" style="background: #3fb7da"></span> 向左掃描比較</span>
+            <span class="tag"><span class="dot" style="background: var(--move)"></span> 元素右移</span>
+            <span class="tag"><span class="dot" style="background: var(--done)"></span> 已排序區</span>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <h2>狀態資訊</h2>
+        <div class="stats">
+          <div class="stat"><div class="k">資料筆數</div><div class="v" id="nStat">0</div></div>
+          <div class="stat"><div class="k">比較次數</div><div class="v" id="cmpStat">0</div></div>
+          <div class="stat"><div class="k">位移次數</div><div class="v" id="shiftStat">0</div></div>
+          <div class="stat"><div class="k">已完成回合</div><div class="v" id="roundStat">0</div></div>
+        </div>
+
+        <div style="height:14px"></div>
+        <div class="box">
+          <ul>
+            <li>一開始把索引 0 視為已排序。</li>
+            <li>取出下一個元素當 key。</li>
+            <li>從 key 左邊開始往回找位置。</li>
+            <li>凡是比 key 大的都先往右移一格。</li>
+            <li>空出位置後，再把 key 放進去。</li>
+          </ul>
+        </div>
+
+        <div style="height:14px"></div>
+        <div id="log" class="box log">[log] Ready.</div>
+      </aside>
+    </section>
+
+    <section class="panel" style="margin-top:20px;">
+      <h2>複雜度摘要</h2>
+      <table class="complexity">
+        <thead>
+          <tr>
+            <th>情況</th>
+            <th>時間</th>
+            <th>說明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Best Case</td>
+            <td>O(n)</td>
+            <td>陣列原本就接近有序，只需少量比較。</td>
+          </tr>
+          <tr>
+            <td>Average Case</td>
+            <td>O(n²)</td>
+            <td>一般情況下，常需要反覆向左掃描與移動。</td>
+          </tr>
+          <tr>
+            <td>Worst Case</td>
+            <td>O(n²)</td>
+            <td>完全逆序時，每個新元素都要插到最前面。</td>
+          </tr>
+          <tr>
+            <td>Space</td>
+            <td>O(1)</td>
+            <td>原地排序，只額外使用少量暫存變數。</td>
+          </tr>
+          <tr>
+            <td>Stability</td>
+            <td>穩定</td>
+            <td>相等元素的相對順序可維持不變。</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="note">
+        這份程式刻意把動畫事件拆成 <strong>pick / compare / shift / insert / round-end / done</strong>，
+        讓插入排序的動態特徵更清楚，也和你前一個 bubble sort 版本的互動節奏區隔開來。
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    let base = [];
+    let events = [];
+    let ptr = 0;
+    let timer = null;
+
+    function parseNumbers() {
+      return $('numbers').value
+        .split(/[，,\s]+/)
+        .map(v => Number(v))
+        .filter(v => Number.isFinite(v) && v >= 1 && v <= 999);
+    }
+
+    function randomData() {
+      const len = Math.floor(Math.random() * 6) + 7;
+      const arr = Array.from({ length: len }, () => Math.floor(Math.random() * 90) + 10);
+      $('numbers').value = arr.join(', ');
+      setup();
+    }
+
+    function buildEvents(arr) {
+      const a = [...arr];
+      const result = [];
+      let cmp = 0;
+      let shift = 0;
+
+      result.push({ type: 'init', data: [...a], sortedEnd: 0, cmp, shift, round: 0 });
+
+      for (let i = 1; i < a.length; i++) {
+        const key = a[i];
+        let j = i - 1;
+
+        result.push({ type: 'pick', index: i, key, data: [...a], sortedEnd: i - 1, cmp, shift, round: i });
+
+        while (j >= 0) {
+          cmp++;
+          result.push({
+            type: 'compare',
+            left: j,
+            keyIndex: i,
+            key,
+            data: [...a],
+            sortedEnd: i - 1,
+            cmp, shift, round: i
+          });
+
+          if (a[j] > key) {
+            a[j + 1] = a[j];
+            shift++;
+            result.push({
+              type: 'shift',
+              from: j,
+              to: j + 1,
+              key,
+              data: [...a],
+              sortedEnd: i - 1,
+              cmp, shift, round: i
+            });
+            j--;
+          } else {
+            break;
+          }
+        }
+
+        a[j + 1] = key;
+        result.push({
+          type: 'insert',
+          position: j + 1,
+          key,
+          data: [...a],
+          sortedEnd: i,
+          cmp, shift, round: i
+        });
+
+        result.push({
+          type: 'round-end',
+          round: i,
+          data: [...a],
+          sortedEnd: i,
+          cmp, shift
+        });
+      }
+
+      result.push({ type: 'done', data: [...a], sortedEnd: a.length - 1, cmp, shift, round: a.length - 1 });
+      return result;
+    }
+
+    function draw(data, marks = {}, sortedEnd = -1) {
+      const area = $('bars');
+      area.innerHTML = '';
+      const max = Math.max(...data, 1);
+
+      data.forEach((num, idx) => {
+        const node = document.createElement('div');
+        node.className = 'node';
+
+        const numEl = document.createElement('div');
+        numEl.className = 'num';
+        numEl.textContent = num;
+
+        const bar = document.createElement('div');
+        bar.className = 'bar';
+        bar.style.height = `${Math.max(26, Math.round((num / max) * 245))}px`;
+
+        if (idx <= sortedEnd) bar.classList.add('sorted');
+        if (marks.key === idx) bar.classList.add('key');
+        if (marks.scan === idx) bar.classList.add('scan');
+        if (marks.shift && (idx === marks.shift.from || idx === marks.shift.to)) bar.classList.add('shift');
+
+        const idxEl = document.createElement('div');
+        idxEl.className = 'idx';
+        idxEl.textContent = idx;
+
+        node.appendChild(numEl);
+        node.appendChild(bar);
+        node.appendChild(idxEl);
+        area.appendChild(node);
+      });
+    }
+
+    function log(text) {
+      const box = $('log');
+      box.textContent += `\n${text}`;
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function setStats({ n, cmp = 0, shift = 0, round = 0 }) {
+      $('nStat').textContent = n;
+      $('cmpStat').textContent = cmp;
+      $('shiftStat').textContent = shift;
+      $('roundStat').textContent = round;
+    }
+
+    function apply(ev) {
+      const n = base.length;
+
+      switch (ev.type) {
+        case 'init':
+          draw(ev.data, {}, 0);
+          $('message').innerHTML = `初始狀態：先把索引 0 視為已排序區。`;
+          setStats({ n, cmp: ev.cmp, shift: ev.shift, round: 0 });
+          break;
+
+        case 'pick':
+          draw(ev.data, { key: ev.index }, ev.sortedEnd);
+          $('message').innerHTML = `第 <strong>${ev.round}</strong> 回合：選出 key = <strong>${ev.key}</strong>，準備插入左側已排序區。`;
+          setStats({ n, cmp: ev.cmp, shift: ev.shift, round: ev.round - 1 });
+          log(`[round ${ev.round}] pick key=${ev.key} at index ${ev.index}`);
+          break;
+
+        case 'compare':
+          draw(ev.data, { scan: ev.left }, ev.sortedEnd);
+          $('message').innerHTML = `比較左側元素 <strong>a[${ev.left}] = ${ev.data[ev.left]}</strong> 與 key = <strong>${ev.key}</strong>。`;
+          setStats({ n, cmp: ev.cmp, shift: ev.shift, round: ev.round - 1 });
+          log(`compare  a[${ev.left}]=${ev.data[ev.left]} with key=${ev.key}`);
+          break;
+
+        case 'shift':
+          draw(ev.data, { shift: { from: ev.from, to: ev.to } }, ev.sortedEnd);
+          $('message').innerHTML = `因為 <strong>${ev.data[ev.to]}</strong> 原本比 key 大，所以右移到索引 ${ev.to}，替 key 騰出空間。`;
+          setStats({ n, cmp: ev.cmp, shift: ev.shift, round: ev.round - 1 });
+          log(`shift    a[${ev.from}] -> a[${ev.to}]`);
+          break;
+
+        case 'insert':
+          draw(ev.data, { key: ev.position }, ev.sortedEnd);
+          $('message').innerHTML = `把 key = <strong>${ev.key}</strong> 插入索引 <strong>${ev.position}</strong>，目前左側區間已重新有序。`;
+          setStats({ n, cmp: ev.cmp, shift: ev.shift, round: ev.round - 1 });
+          log(`insert   key=${ev.key} at index ${ev.position}`);
+          break;
+
+        case 'round-end':
+          draw(ev.data, {}, ev.sortedEnd);
+          $('message').innerHTML = `第 <strong>${ev.round}</strong> 回合完成，索引 0 到 ${ev.sortedEnd} 已是排序好的區間。`;
+          setStats({ n, cmp: ev.cmp, shift: ev.shift, round: ev.round });
+          log(`[round ${ev.round}] sorted prefix = [${ev.data.slice(0, ev.sortedEnd + 1).join(', ')}]`);
+          break;
+
+        case 'done':
+          draw(ev.data, {}, ev.sortedEnd);
+          $('message').innerHTML = `排序完成。最終結果：<strong>[ ${ev.data.join(', ')} ]</strong>`;
+          setStats({ n, cmp: ev.cmp, shift: ev.shift, round: ev.round });
+          log(`[done] compare=${ev.cmp}, shift=${ev.shift}`);
+          stopRun();
+          $('stepBtn').disabled = true;
+          break;
+      }
+    }
+
+    function nextStep() {
+      if (ptr >= events.length) {
+        stopRun();
+        return;
+      }
+      apply(events[ptr++]);
+      if (ptr >= events.length) {
+        stopRun();
+        $('stepBtn').disabled = true;
+      }
+    }
+
+    function run() {
+      if (ptr >= events.length) return;
+      $('runBtn').disabled = true;
+      $('stopBtn').disabled = false;
+      $('stepBtn').disabled = true;
+      $('resetBtn').disabled = true;
+      $('randomBtn').disabled = true;
+
+      const tick = () => {
+        nextStep();
+        if (ptr < events.length) timer = setTimeout(tick, Number($('speed').value));
+      };
+      tick();
+    }
+
+    function stopRun() {
+      clearTimeout(timer);
+      timer = null;
+      $('runBtn').disabled = ptr >= events.length;
+      $('stopBtn').disabled = true;
+      $('stepBtn').disabled = ptr >= events.length;
+      $('resetBtn').disabled = false;
+      $('randomBtn').disabled = false;
+    }
+
+    function setup() {
+      stopRun();
+      base = parseNumbers();
+      if (base.length < 2) {
+        alert('請輸入至少兩個 1~999 的整數');
+        return;
+      }
+      events = buildEvents(base);
+      ptr = 0;
+      $('log').textContent = '[log] Ready.';
+      draw(base, {}, 0);
+      $('message').textContent = '資料已載入。插入排序會從左到右，逐一把元素插進前面已排序好的區間。';
+      setStats({ n: base.length, cmp: 0, shift: 0, round: 0 });
+      $('stepBtn').disabled = false;
+    }
+
+    $('speed').addEventListener('input', (e) => {
+      $('speedText').textContent = `${e.target.value} ms`;
+    });
+
+    $('resetBtn').addEventListener('click', setup);
+    $('randomBtn').addEventListener('click', randomData);
+    $('runBtn').addEventListener('click', run);
+    $('stopBtn').addEventListener('click', stopRun);
+    $('stepBtn').addEventListener('click', () => {
+      stopRun();
+      nextStep();
+    });
+
+    setup();
+  </script>
+</body>
+</html>

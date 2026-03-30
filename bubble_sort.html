@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bubble Sort Lab</title>
+  <style>
+    :root {
+      --bg: #08111f;
+      --panel: #121c2f;
+      --panel-2: #0d1627;
+      --text: #e5eefc;
+      --muted: #9fb3d1;
+      --line: #22314f;
+      --accent: #7c9cff;
+      --accent-2: #4fd1c5;
+      --warn: #f6c453;
+      --danger: #ff7b7b;
+      --ok: #64d99a;
+      --shadow: 0 18px 45px rgba(0,0,0,.28);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, "Microsoft JhengHei", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(124,156,255,.18), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(79,209,197,.14), transparent 30%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .page {
+      width: min(1120px, calc(100% - 32px));
+      margin: 28px auto 48px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, rgba(124,156,255,.18), rgba(79,209,197,.12));
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 24px;
+      padding: 28px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(1.8rem, 3vw, 2.8rem);
+      letter-spacing: .04em;
+    }
+
+    .hero p {
+      margin: 12px 0 0;
+      color: var(--muted);
+      line-height: 1.8;
+      max-width: 760px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .panel {
+      background: rgba(18,28,47,.94);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 22px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel h2 {
+      margin: 0 0 16px;
+      font-size: 1.08rem;
+      letter-spacing: .03em;
+    }
+
+    .controls {
+      display: grid;
+      gap: 14px;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: .92rem;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      min-width: 220px;
+      background: #0b1424;
+      border: 1px solid #31415f;
+      color: var(--text);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: .95rem;
+      outline: none;
+    }
+
+    input[type="range"] {
+      width: 180px;
+      accent-color: var(--accent);
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 11px 16px;
+      font-size: .94rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .12s ease, opacity .18s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+    .primary { background: var(--accent); color: white; }
+    .secondary { background: #22314f; color: var(--text); }
+    .success { background: var(--ok); color: #072313; }
+    .danger { background: var(--danger); color: #2d0c0c; }
+
+    .viz-wrap {
+      margin-top: 18px;
+      padding: 18px 16px 10px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+      border: 1px solid var(--line);
+    }
+
+    .bars {
+      height: 320px;
+      display: flex;
+      align-items: end;
+      justify-content: center;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 12px 4px 4px;
+    }
+
+    .item {
+      min-width: 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+      flex-shrink: 0;
+    }
+
+    .value {
+      font-size: .82rem;
+      color: #d9e5ff;
+      font-weight: 700;
+    }
+
+    .column {
+      width: 48px;
+      border-radius: 14px 14px 6px 6px;
+      background: linear-gradient(180deg, var(--accent), #5876d9);
+      transition: height .2s ease, transform .18s ease, filter .18s ease;
+      position: relative;
+      box-shadow: inset 0 -8px 20px rgba(0,0,0,.12);
+    }
+
+    .column::after {
+      content: "";
+      position: absolute;
+      inset: 8px 8px auto 8px;
+      height: 24%;
+      border-radius: 999px;
+      background: rgba(255,255,255,.13);
+    }
+
+    .column.active {
+      background: linear-gradient(180deg, var(--warn), #f0ab2c);
+      transform: translateY(-4px);
+      filter: saturate(1.08);
+    }
+
+    .column.swap {
+      background: linear-gradient(180deg, var(--danger), #ef5d5d);
+      transform: translateY(-6px);
+    }
+
+    .column.fixed {
+      background: linear-gradient(180deg, var(--ok), #33b771);
+    }
+
+    .index {
+      font-size: .75rem;
+      color: #7689a8;
+    }
+
+    .message {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: #0b1424;
+      border: 1px solid var(--line);
+      color: #dbe7ff;
+      line-height: 1.8;
+      min-height: 58px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .stat {
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+    }
+
+    .stat .k {
+      color: var(--muted);
+      font-size: .84rem;
+      margin-bottom: 6px;
+    }
+
+    .stat .v {
+      font-size: 1.6rem;
+      font-weight: 800;
+    }
+
+    .notes, .log {
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+    }
+
+    .notes ul {
+      margin: 0;
+      padding-left: 20px;
+      color: var(--muted);
+      line-height: 1.9;
+    }
+
+    .log {
+      height: 260px;
+      overflow: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: .84rem;
+      color: #bfd0f5;
+      line-height: 1.8;
+      white-space: pre-wrap;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .complexity {
+      margin-top: 16px;
+      border-collapse: collapse;
+      width: 100%;
+      overflow: hidden;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+    }
+
+    .complexity th,
+    .complexity td {
+      padding: 12px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .complexity th {
+      background: #0b1424;
+      color: #c8d8fa;
+    }
+
+    .complexity td { color: var(--muted); }
+
+    .footer {
+      margin-top: 16px;
+      color: #7f93b5;
+      font-size: .9rem;
+      line-height: 1.8;
+    }
+
+    @media (max-width: 920px) {
+      .grid { grid-template-columns: 1fr; }
+      .cards { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    @media (max-width: 640px) {
+      .page { width: min(100% - 20px, 1000px); }
+      .panel, .hero { padding: 18px; }
+      .cards { grid-template-columns: repeat(2, 1fr); }
+      .column, .item { min-width: 38px; width: 38px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <h1>Bubble Sort Playground</h1>
+      <p>
+        這是一個重新設計過的氣泡排序視覺化頁面。保留了「相鄰比較、較大值往右移」的核心精神，
+        但版型、互動區、提示文字與動畫表現都刻意改成另一種做法，避免和原始版本長得太像。
+      </p>
+    </section>
+
+    <section class="grid">
+      <div class="panel">
+        <h2>互動實驗區</h2>
+        <div class="controls">
+          <div class="row">
+            <input id="numbers" type="text" value="28, 17, 43, 9, 35, 12, 50" />
+            <button class="primary" id="resetBtn">重設</button>
+            <button class="secondary" id="randomBtn">隨機資料</button>
+          </div>
+          <div class="row">
+            <span class="pill">速度 <strong id="speedText">650 ms</strong></span>
+            <input id="speed" type="range" min="150" max="1200" step="50" value="650" />
+            <button class="success" id="runBtn">開始</button>
+            <button class="danger" id="pauseBtn" disabled>停止</button>
+            <button class="secondary" id="stepBtn">單步</button>
+          </div>
+        </div>
+
+        <div class="viz-wrap">
+          <div id="bars" class="bars"></div>
+          <div id="message" class="message">請先按「開始」或「單步」，觀察每次相鄰比較如何把大值推向右側。</div>
+          <div class="legend">
+            <span class="pill"><span class="dot" style="background:var(--warn)"></span> 目前比較</span>
+            <span class="pill"><span class="dot" style="background:var(--danger)"></span> 發生交換</span>
+            <span class="pill"><span class="dot" style="background:var(--ok)"></span> 已固定位置</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>狀態與說明</h2>
+        <div class="cards">
+          <div class="stat"><div class="k">資料筆數</div><div class="v" id="nStat">0</div></div>
+          <div class="stat"><div class="k">比較次數</div><div class="v" id="cmpStat">0</div></div>
+          <div class="stat"><div class="k">交換次數</div><div class="v" id="swapStat">0</div></div>
+          <div class="stat"><div class="k">完成輪數</div><div class="v" id="passStat">0</div></div>
+        </div>
+
+        <div style="height:14px"></div>
+
+        <div class="notes">
+          <ul>
+            <li>每一輪都從左到右比較相鄰兩個元素。</li>
+            <li>左邊比右邊大，就交換位置。</li>
+            <li>一輪結束後，最右邊會固定一個目前最大的值。</li>
+            <li>若某輪完全沒有交換，代表已排好，可提前停止。</li>
+          </ul>
+        </div>
+
+        <div style="height:14px"></div>
+
+        <div id="log" class="log">[log] Ready.</div>
+      </div>
+    </section>
+
+    <section class="panel" style="margin-top:20px;">
+      <h2>複雜度摘要</h2>
+      <table class="complexity">
+        <thead>
+          <tr>
+            <th>情況</th>
+            <th>時間</th>
+            <th>補充</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Best Case</td>
+            <td>O(n)</td>
+            <td>已排序陣列，第一輪無交換即可結束。</td>
+          </tr>
+          <tr>
+            <td>Average Case</td>
+            <td>O(n²)</td>
+            <td>一般隨機資料情境。</td>
+          </tr>
+          <tr>
+            <td>Worst Case</td>
+            <td>O(n²)</td>
+            <td>完全反序時，交換最頻繁。</td>
+          </tr>
+          <tr>
+            <td>Space</td>
+            <td>O(1)</td>
+            <td>原地排序，額外空間需求極小。</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="footer">
+        我另外把步驟顯示改成「事件驅動」方式，先產生 compare / swap / pass-end / finished 等事件，
+        再一筆一筆播放，結構上也和常見的直接遞迴或直接迴圈動畫版不太一樣。
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const el = (id) => document.getElementById(id);
+
+    let source = [];
+    let events = [];
+    let pointer = 0;
+    let timer = null;
+
+    function parseNumbers() {
+      return el('numbers').value
+        .split(/[，,\s]+/)
+        .map(v => Number(v))
+        .filter(v => Number.isFinite(v) && v >= 1 && v <= 999);
+    }
+
+    function randomData() {
+      const len = Math.floor(Math.random() * 6) + 7;
+      const arr = Array.from({ length: len }, () => Math.floor(Math.random() * 89) + 10);
+      el('numbers').value = arr.join(', ');
+      setup();
+    }
+
+    function buildEvents(arr) {
+      const a = [...arr];
+      const list = [];
+      let compareCount = 0;
+      let swapCount = 0;
+
+      for (let end = a.length - 1, round = 1; end > 0; end--, round++) {
+        let moved = false;
+        list.push({ type: 'round-start', round, end, data: [...a], compareCount, swapCount });
+
+        for (let i = 0; i < end; i++) {
+          compareCount++;
+          list.push({
+            type: 'compare',
+            left: i,
+            right: i + 1,
+            round,
+            end,
+            data: [...a],
+            compareCount,
+            swapCount
+          });
+
+          if (a[i] > a[i + 1]) {
+            [a[i], a[i + 1]] = [a[i + 1], a[i]];
+            swapCount++;
+            moved = true;
+            list.push({
+              type: 'swap',
+              left: i,
+              right: i + 1,
+              round,
+              end,
+              data: [...a],
+              compareCount,
+              swapCount
+            });
+          }
+        }
+
+        list.push({
+          type: 'round-end',
+          round,
+          end,
+          moved,
+          data: [...a],
+          compareCount,
+          swapCount
+        });
+
+        if (!moved) {
+          list.push({ type: 'early-finish', data: [...a], compareCount, swapCount, round });
+          break;
+        }
+      }
+
+      list.push({ type: 'finished', data: [...a], compareCount, swapCount });
+      return list;
+    }
+
+    function draw(data, mark = {}, fixedFrom = data.length) {
+      const box = el('bars');
+      box.innerHTML = '';
+      const max = Math.max(...data, 1);
+
+      data.forEach((num, idx) => {
+        const item = document.createElement('div');
+        item.className = 'item';
+
+        const value = document.createElement('div');
+        value.className = 'value';
+        value.textContent = num;
+
+        const bar = document.createElement('div');
+        bar.className = 'column';
+        bar.style.height = `${Math.max(26, Math.round((num / max) * 240))}px`;
+
+        if (idx >= fixedFrom) bar.classList.add('fixed');
+        if (mark.compare && (idx === mark.compare[0] || idx === mark.compare[1])) bar.classList.add('active');
+        if (mark.swap && (idx === mark.swap[0] || idx === mark.swap[1])) bar.classList.add('swap');
+
+        const index = document.createElement('div');
+        index.className = 'index';
+        index.textContent = idx;
+
+        item.appendChild(value);
+        item.appendChild(bar);
+        item.appendChild(index);
+        box.appendChild(item);
+      });
+    }
+
+    function log(text) {
+      const area = el('log');
+      area.textContent += `\n${text}`;
+      area.scrollTop = area.scrollHeight;
+    }
+
+    function setStats({ n, compareCount = 0, swapCount = 0, round = 0 }) {
+      el('nStat').textContent = n;
+      el('cmpStat').textContent = compareCount;
+      el('swapStat').textContent = swapCount;
+      el('passStat').textContent = round;
+    }
+
+    function applyEvent(evt) {
+      const n = source.length;
+
+      switch (evt.type) {
+        case 'round-start':
+          draw(evt.data, {}, evt.end + 1);
+          el('message').innerHTML = `第 <strong>${evt.round}</strong> 輪開始，這輪會把目前尚未固定區間中的最大值送到右端。`;
+          setStats({ n, compareCount: evt.compareCount, swapCount: evt.swapCount, round: evt.round - 1 });
+          log(`[round ${evt.round}] start`);
+          break;
+
+        case 'compare':
+          draw(evt.data, { compare: [evt.left, evt.right] }, evt.end + 1);
+          el('message').innerHTML = `比較索引 ${evt.left} 與 ${evt.right}：<strong>${evt.data[evt.left]}</strong> 和 <strong>${evt.data[evt.right]}</strong>。`;
+          setStats({ n, compareCount: evt.compareCount, swapCount: evt.swapCount, round: evt.round - 1 });
+          log(`compare  a[${evt.left}]=${evt.data[evt.left]}  vs  a[${evt.right}]=${evt.data[evt.right]}`);
+          break;
+
+        case 'swap':
+          draw(evt.data, { swap: [evt.left, evt.right] }, evt.end + 1);
+          el('message').innerHTML = `左值較大，已交換位置。新的排列：<strong>[ ${evt.data.join(', ')} ]</strong>`;
+          setStats({ n, compareCount: evt.compareCount, swapCount: evt.swapCount, round: evt.round - 1 });
+          log(`swap     -> [${evt.data.join(', ')}]`);
+          break;
+
+        case 'round-end':
+          draw(evt.data, {}, evt.end);
+          el('message').innerHTML = evt.moved
+            ? `第 <strong>${evt.round}</strong> 輪結束，索引 ${evt.end} 的值 <strong>${evt.data[evt.end]}</strong> 已固定。`
+            : `第 <strong>${evt.round}</strong> 輪完全沒有交換，表示資料其實已經排序完成。`;
+          setStats({ n, compareCount: evt.compareCount, swapCount: evt.swapCount, round: evt.round });
+          log(`[round ${evt.round}] end, fixed value = ${evt.data[evt.end]}`);
+          break;
+
+        case 'early-finish':
+          draw(evt.data, {}, 0);
+          el('message').innerHTML = `偵測到「無交換輪」，提前停止。這就是最佳化 bubble sort 常見的 early exit。`;
+          setStats({ n, compareCount: evt.compareCount, swapCount: evt.swapCount, round: evt.round });
+          log(`[optimized] stop early`);
+          break;
+
+        case 'finished':
+          draw(evt.data, {}, 0);
+          el('message').innerHTML = `排序完成。最終結果：<strong>[ ${evt.data.join(', ')} ]</strong>`;
+          setStats({ n, compareCount: evt.compareCount, swapCount: evt.swapCount, round: el('passStat').textContent });
+          log(`[done] total compare=${evt.compareCount}, total swap=${evt.swapCount}`);
+          stopRun();
+          el('stepBtn').disabled = true;
+          break;
+      }
+    }
+
+    function nextEvent() {
+      if (pointer >= events.length) {
+        stopRun();
+        return;
+      }
+      applyEvent(events[pointer++]);
+      if (pointer >= events.length) {
+        stopRun();
+        el('stepBtn').disabled = true;
+      }
+    }
+
+    function run() {
+      if (pointer >= events.length) return;
+      el('runBtn').disabled = true;
+      el('pauseBtn').disabled = false;
+      el('stepBtn').disabled = true;
+      el('randomBtn').disabled = true;
+      el('resetBtn').disabled = true;
+
+      const tick = () => {
+        nextEvent();
+        if (pointer < events.length) {
+          timer = setTimeout(tick, Number(el('speed').value));
+        }
+      };
+      tick();
+    }
+
+    function stopRun() {
+      clearTimeout(timer);
+      timer = null;
+      el('runBtn').disabled = pointer >= events.length;
+      el('pauseBtn').disabled = true;
+      el('stepBtn').disabled = pointer >= events.length;
+      el('randomBtn').disabled = false;
+      el('resetBtn').disabled = false;
+    }
+
+    function setup() {
+      stopRun();
+      source = parseNumbers();
+      if (source.length < 2) {
+        alert('請輸入至少兩個 1~999 的整數');
+        return;
+      }
+      events = buildEvents(source);
+      pointer = 0;
+      el('log').textContent = '[log] Ready.';
+      draw(source);
+      el('message').textContent = '資料已載入，請開始播放排序流程。';
+      setStats({ n: source.length, compareCount: 0, swapCount: 0, round: 0 });
+      el('stepBtn').disabled = false;
+    }
+
+    el('speed').addEventListener('input', (e) => {
+      el('speedText').textContent = `${e.target.value} ms`;
+    });
+
+    el('resetBtn').addEventListener('click', setup);
+    el('randomBtn').addEventListener('click', randomData);
+    el('runBtn').addEventListener('click', run);
+    el('pauseBtn').addEventListener('click', stopRun);
+    el('stepBtn').addEventListener('click', () => {
+      stopRun();
+      nextEvent();
+    });
+
+    setup();
+  </script>
+</body>
+</html>

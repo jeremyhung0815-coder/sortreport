@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quick Sort Arena</title>
+  <style>
+    :root {
+      --bg: #08111d;
+      --panel: #131d30;
+      --panel-2: #0c1525;
+      --line: #263754;
+      --text: #e8f0ff;
+      --muted: #9db2d7;
+      --main: #59b0ff;
+      --pivot: #ffd166;
+      --scan: #74e0c4;
+      --swap: #ff7b91;
+      --bound: #a78bfa;
+      --done: #59d98d;
+      --shadow: 0 18px 42px rgba(0,0,0,.28);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, "Microsoft JhengHei", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(89,176,255,.15), transparent 24%),
+        radial-gradient(circle at bottom right, rgba(167,139,250,.12), transparent 24%),
+        var(--bg);
+    }
+
+    .wrap {
+      width: min(1160px, calc(100% - 32px));
+      margin: 28px auto 42px;
+    }
+
+    .hero, .panel {
+      background: rgba(19,29,48,.95);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      padding: 28px;
+      background: linear-gradient(135deg, rgba(89,176,255,.16), rgba(167,139,250,.10));
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(1.9rem, 3vw, 2.8rem);
+      letter-spacing: .04em;
+    }
+
+    .hero p {
+      margin: 12px 0 0;
+      max-width: 860px;
+      color: var(--muted);
+      line-height: 1.85;
+    }
+
+    .grid {
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: 1.24fr .76fr;
+      gap: 20px;
+    }
+
+    .panel { padding: 22px; }
+    .panel h2 {
+      margin: 0 0 16px;
+      font-size: 1.08rem;
+      letter-spacing: .03em;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      min-width: 240px;
+      border: 1px solid #334a6f;
+      border-radius: 12px;
+      background: #0a1322;
+      color: var(--text);
+      padding: 12px 14px;
+      font-size: .95rem;
+      outline: none;
+    }
+
+    input[type="range"] {
+      width: 190px;
+      accent-color: var(--main);
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 11px 16px;
+      font-size: .94rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .12s ease, opacity .18s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+    .btn-main { background: var(--main); color: white; }
+    .btn-sub { background: #253556; color: var(--text); }
+    .btn-good { background: var(--done); color: #072514; }
+    .btn-stop { background: var(--swap); color: #310a12; }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    .viz {
+      margin-top: 14px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+      padding: 18px 16px 12px;
+    }
+
+    .bars {
+      height: 330px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 8px 4px;
+    }
+
+    .node {
+      min-width: 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .num {
+      font-size: .82rem;
+      font-weight: 700;
+      color: #d9e6ff;
+    }
+
+    .bar {
+      width: 48px;
+      border-radius: 14px 14px 6px 6px;
+      background: linear-gradient(180deg, var(--main), #3478d3);
+      transition: height .2s ease, transform .18s ease, filter .18s ease;
+      position: relative;
+      box-shadow: inset 0 -8px 16px rgba(0,0,0,.12);
+    }
+
+    .bar::after {
+      content: "";
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      top: 8px;
+      height: 22%;
+      border-radius: 999px;
+      background: rgba(255,255,255,.12);
+    }
+
+    .bar.range { outline: 2px solid rgba(167,139,250,.45); outline-offset: -2px; }
+    .bar.pivot { background: linear-gradient(180deg, var(--pivot), #f4b637); transform: translateY(-6px); }
+    .bar.scan { background: linear-gradient(180deg, var(--scan), #31b991); transform: translateY(-4px); }
+    .bar.swap { background: linear-gradient(180deg, var(--swap), #ef5d78); transform: translateY(-8px); }
+    .bar.bound { background: linear-gradient(180deg, var(--bound), #7b63dd); }
+    .bar.done { background: linear-gradient(180deg, var(--done), #35b96d); }
+
+    .idx {
+      color: #7589ae;
+      font-size: .75rem;
+    }
+
+    .flag {
+      position: absolute;
+      top: 18px;
+      font-size: .68rem;
+      font-weight: 700;
+      color: #0b1020;
+      background: rgba(255,255,255,.9);
+      padding: 2px 6px;
+      border-radius: 999px;
+    }
+
+    .msg {
+      margin-top: 16px;
+      background: #0a1322;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 16px;
+      min-height: 64px;
+      line-height: 1.8;
+      color: #dbe8ff;
+    }
+
+    .legend {
+      margin-top: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .stat, .box {
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+    }
+
+    .stat .k {
+      font-size: .84rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .stat .v {
+      font-size: 1.6rem;
+      font-weight: 800;
+    }
+
+    .box ul {
+      margin: 0;
+      padding-left: 20px;
+      color: var(--muted);
+      line-height: 1.9;
+    }
+
+    .log {
+      height: 250px;
+      overflow: auto;
+      white-space: pre-wrap;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: .84rem;
+      color: #c3d3f8;
+      line-height: 1.8;
+    }
+
+    .partition-board {
+      margin-top: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .partition-card {
+      background: #0a1322;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 14px;
+      color: var(--muted);
+      line-height: 1.8;
+      font-size: .9rem;
+    }
+
+    .partition-card strong { color: var(--text); }
+
+    .complexity {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .complexity th,
+    .complexity td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+    }
+
+    .complexity th {
+      background: #0a1322;
+      color: #d0e0ff;
+    }
+
+    .complexity td { color: var(--muted); }
+
+    .note {
+      margin-top: 14px;
+      color: #7f95bc;
+      line-height: 1.8;
+      font-size: .92rem;
+    }
+
+    @media (max-width: 940px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 640px) {
+      .wrap { width: min(100% - 20px, 1000px); }
+      .hero, .panel { padding: 18px; }
+      .bar, .node { width: 40px; min-width: 40px; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <h1>Quick Sort Arena</h1>
+      <p>
+        這版是快速排序。它的重點不是一輪一輪找最大值，也不是拆成兩半再合併，
+        而是先選一個 <strong>pivot（基準值）</strong>，把比它小的放左邊、比它大的放右邊，
+        完成一次 <strong>partition</strong> 後，pivot 會落到正確位置，接著對左右兩邊遞迴做同樣的事。
+      </p>
+    </section>
+
+    <section class="grid">
+      <section class="panel">
+        <h2>互動視覺化</h2>
+        <div class="row">
+          <input id="numbers" type="text" value="29, 10, 14, 37, 13, 8, 22" />
+          <button id="resetBtn" class="btn-main">重設</button>
+          <button id="randomBtn" class="btn-sub">隨機資料</button>
+        </div>
+        <div class="row">
+          <span class="tag">速度 <strong id="speedText">700 ms</strong></span>
+          <input id="speed" type="range" min="180" max="1300" value="700" step="50" />
+          <button id="runBtn" class="btn-good">開始</button>
+          <button id="stopBtn" class="btn-stop" disabled>停止</button>
+          <button id="stepBtn" class="btn-sub">單步</button>
+        </div>
+
+        <div class="viz">
+          <div id="bars" class="bars"></div>
+          <div id="message" class="msg">Quick sort 會先選 pivot，做 partition，再遞迴排序左右兩段。</div>
+          <div class="legend">
+            <span class="tag"><span class="dot" style="background: var(--pivot)"></span> pivot</span>
+            <span class="tag"><span class="dot" style="background: var(--scan)"></span> 掃描中</span>
+            <span class="tag"><span class="dot" style="background: var(--swap)"></span> 交換</span>
+            <span class="tag"><span class="dot" style="background: var(--bound)"></span> partition 邊界</span>
+            <span class="tag"><span class="dot" style="background: var(--done)"></span> 已就位</span>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <h2>狀態資訊</h2>
+        <div class="stats">
+          <div class="stat"><div class="k">資料筆數</div><div class="v" id="nStat">0</div></div>
+          <div class="stat"><div class="k">比較次數</div><div class="v" id="cmpStat">0</div></div>
+          <div class="stat"><div class="k">交換次數</div><div class="v" id="swapStat">0</div></div>
+          <div class="stat"><div class="k">partition 次數</div><div class="v" id="partStat">0</div></div>
+        </div>
+
+        <div class="partition-board" id="partitionBoard">
+          <div class="partition-card">目前區段：<strong>-</strong></div>
+          <div class="partition-card">Pivot：<strong>-</strong></div>
+          <div class="partition-card">左側（≤ pivot）：<strong>-</strong></div>
+          <div class="partition-card">右側（> pivot）：<strong>-</strong></div>
+        </div>
+
+        <div style="height:14px"></div>
+        <div class="box">
+          <ul>
+            <li>先在目前區段選一個 pivot。</li>
+            <li>掃描其他元素，決定它應該落在 pivot 左邊還是右邊。</li>
+            <li>把小於等於 pivot 的元素交換到左側區域。</li>
+            <li>最後把 pivot 放到正確位置。</li>
+            <li>對 pivot 左右兩側子陣列重複相同流程。</li>
+          </ul>
+        </div>
+
+        <div style="height:14px"></div>
+        <div id="log" class="box log">[log] Ready.</div>
+      </aside>
+    </section>
+
+    <section class="panel" style="margin-top:20px;">
+      <h2>複雜度摘要</h2>
+      <table class="complexity">
+        <thead>
+          <tr>
+            <th>情況</th>
+            <th>時間</th>
+            <th>說明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Best Case</td>
+            <td>O(n log n)</td>
+            <td>每次 partition 都能切出相對平均的左右兩邊。</td>
+          </tr>
+          <tr>
+            <td>Average Case</td>
+            <td>O(n log n)</td>
+            <td>實務上通常很快，常被視為高效率通用排序。</td>
+          </tr>
+          <tr>
+            <td>Worst Case</td>
+            <td>O(n²)</td>
+            <td>若 pivot 每次都選得很差，例如幾乎切不開，就會退化。</td>
+          </tr>
+          <tr>
+            <td>Space</td>
+            <td>O(log n)</td>
+            <td>主要來自遞迴呼叫堆疊。</td>
+          </tr>
+          <tr>
+            <td>Stability</td>
+            <td>通常不穩定</td>
+            <td>交換過程可能改變相同元素相對順序。</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="note">
+        這份程式採用 Lomuto partition 的視覺化思路，事件拆成 <strong>partition-start / scan / move-left / pivot-place / fixed / done</strong>，
+        讓 quick sort 的 pivot 與 partition 過程比較好看懂。
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    let base = [];
+    let events = [];
+    let ptr = 0;
+    let timer = null;
+    let fixedSet = new Set();
+
+    function parseNumbers() {
+      return $('numbers').value
+        .split(/[，,\s]+/)
+        .map(v => Number(v))
+        .filter(v => Number.isFinite(v) && v >= 1 && v <= 999);
+    }
+
+    function randomData() {
+      const len = Math.floor(Math.random() * 6) + 7;
+      const arr = Array.from({ length: len }, () => Math.floor(Math.random() * 90) + 10);
+      $('numbers').value = arr.join(', ');
+      setup();
+    }
+
+    function buildQuickEvents(arr) {
+      const a = [...arr];
+      const out = [];
+      const stats = { cmp: 0, swp: 0, part: 0 };
+      const fixed = new Set();
+
+      function quick(l, r, depth = 0) {
+        if (l > r) return;
+
+        if (l === r) {
+          fixed.add(l);
+          out.push({
+            type: 'fixed-single', l, r, depth,
+            data: [...a],
+            stats: { ...stats },
+            fixed: [...fixed],
+            range: { l, r },
+            pivotIndex: l,
+            leftVals: [],
+            rightVals: []
+          });
+          return;
+        }
+
+        stats.part++;
+        const pivot = a[r];
+        let i = l - 1;
+
+        out.push({
+          type: 'partition-start', l, r, depth,
+          data: [...a],
+          stats: { ...stats },
+          fixed: [...fixed],
+          range: { l, r },
+          pivotIndex: r,
+          leftVals: [],
+          rightVals: a.slice(l, r)
+        });
+
+        for (let j = l; j < r; j++) {
+          stats.cmp++;
+          out.push({
+            type: 'scan', l, r, depth, j,
+            data: [...a],
+            stats: { ...stats },
+            fixed: [...fixed],
+            range: { l, r },
+            pivotIndex: r,
+            boundary: i,
+            leftVals: a.slice(l, i + 1),
+            rightVals: a.slice(i + 1, r)
+          });
+
+          if (a[j] <= pivot) {
+            i++;
+            if (i !== j) {
+              [a[i], a[j]] = [a[j], a[i]];
+              stats.swp++;
+            }
+            out.push({
+              type: 'move-left', l, r, depth, i, j,
+              data: [...a],
+              stats: { ...stats },
+              fixed: [...fixed],
+              range: { l, r },
+              pivotIndex: r,
+              boundary: i,
+              leftVals: a.slice(l, i + 1),
+              rightVals: a.slice(i + 1, r)
+            });
+          }
+        }
+
+        if (i + 1 !== r) {
+          [a[i + 1], a[r]] = [a[r], a[i + 1]];
+          stats.swp++;
+        }
+        const p = i + 1;
+        fixed.add(p);
+
+        out.push({
+          type: 'pivot-place', l, r, depth, p,
+          data: [...a],
+          stats: { ...stats },
+          fixed: [...fixed],
+          range: { l, r },
+          pivotIndex: p,
+          boundary: p,
+          leftVals: a.slice(l, p),
+          rightVals: a.slice(p + 1, r + 1)
+        });
+
+        quick(l, p - 1, depth + 1);
+        quick(p + 1, r, depth + 1);
+      }
+
+      quick(0, a.length - 1, 0);
+
+      for (let i = 0; i < a.length; i++) fixed.add(i);
+      out.push({
+        type: 'done',
+        data: [...a],
+        stats: { ...stats },
+        fixed: [...fixed],
+        range: null,
+        pivotIndex: null,
+        leftVals: [],
+        rightVals: []
+      });
+
+      return out;
+    }
+
+    function inRange(idx, l, r) {
+      return l != null && r != null && idx >= l && idx <= r;
+    }
+
+    function draw(data, marks = {}) {
+      const area = $('bars');
+      area.innerHTML = '';
+      const max = Math.max(...data, 1);
+      const fixed = new Set(marks.fixed || []);
+
+      data.forEach((num, idx) => {
+        const node = document.createElement('div');
+        node.className = 'node';
+
+        const numEl = document.createElement('div');
+        numEl.className = 'num';
+        numEl.textContent = num;
+
+        const bar = document.createElement('div');
+        bar.className = 'bar';
+        bar.style.height = `${Math.max(26, Math.round((num / max) * 245))}px`;
+
+        if (marks.range && inRange(idx, marks.range.l, marks.range.r)) bar.classList.add('range');
+        if (marks.scan === idx) bar.classList.add('scan');
+        if (marks.pivotIndex === idx) bar.classList.add('pivot');
+        if (marks.swap && (idx === marks.swap.i || idx === marks.swap.j)) bar.classList.add('swap');
+        if (marks.boundary === idx) bar.classList.add('bound');
+        if (fixed.has(idx)) bar.classList.add('done');
+
+        const idxEl = document.createElement('div');
+        idxEl.className = 'idx';
+        idxEl.textContent = idx;
+
+        node.appendChild(numEl);
+        node.appendChild(bar);
+
+        if (marks.pivotIndex === idx) {
+          const flag = document.createElement('div');
+          flag.className = 'flag';
+          flag.textContent = 'P';
+          node.appendChild(flag);
+        } else if (marks.boundary === idx) {
+          const flag = document.createElement('div');
+          flag.className = 'flag';
+          flag.textContent = 'i';
+          node.appendChild(flag);
+        } else if (marks.scan === idx) {
+          const flag = document.createElement('div');
+          flag.className = 'flag';
+          flag.textContent = 'j';
+          node.appendChild(flag);
+        }
+
+        node.appendChild(idxEl);
+        area.appendChild(node);
+      });
+    }
+
+    function updateBoard(range, pivotIndex, leftVals, rightVals, data) {
+      const current = range ? `[ ${range.l} .. ${range.r} ]` : '-';
+      const pivotText = pivotIndex != null ? `index ${pivotIndex} / value ${data[pivotIndex]}` : '-';
+      $('partitionBoard').innerHTML = `
+        <div class="partition-card">目前區段：<strong>${current}</strong></div>
+        <div class="partition-card">Pivot：<strong>${pivotText}</strong></div>
+        <div class="partition-card">左側（≤ pivot）：<strong>${leftVals.length ? '[ ' + leftVals.join(', ') + ' ]' : '-'}</strong></div>
+        <div class="partition-card">右側（> pivot）：<strong>${rightVals.length ? '[ ' + rightVals.join(', ') + ' ]' : '-'}</strong></div>
+      `;
+    }
+
+    function log(text) {
+      const box = $('log');
+      box.textContent += `\n${text}`;
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function setStats(n, s) {
+      $('nStat').textContent = n;
+      $('cmpStat').textContent = s.cmp;
+      $('swapStat').textContent = s.swp;
+      $('partStat').textContent = s.part;
+    }
+
+    function apply(ev) {
+      const n = base.length;
+      fixedSet = new Set(ev.fixed || []);
+      setStats(n, ev.stats || { cmp: 0, swp: 0, part: 0 });
+      updateBoard(ev.range, ev.pivotIndex, ev.leftVals || [], ev.rightVals || [], ev.data);
+
+      switch (ev.type) {
+        case 'partition-start':
+          draw(ev.data, {
+            range: ev.range,
+            pivotIndex: ev.pivotIndex,
+            fixed: ev.fixed
+          });
+          $('message').innerHTML = `開始對區段 <strong>[${ev.l}..${ev.r}]</strong> 做 partition，pivot 選擇為末端值 <strong>${ev.data[ev.pivotIndex]}</strong>。`;
+          log(`partition start [${ev.l}..${ev.r}], pivot=${ev.data[ev.pivotIndex]}`);
+          break;
+
+        case 'scan':
+          draw(ev.data, {
+            range: ev.range,
+            pivotIndex: ev.pivotIndex,
+            boundary: ev.boundary,
+            scan: ev.j,
+            fixed: ev.fixed
+          });
+          $('message').innerHTML = `掃描索引 <strong>${ev.j}</strong>，比較值 <strong>${ev.data[ev.j]}</strong> 和 pivot <strong>${ev.data[ev.pivotIndex]}</strong>。`;
+          log(`scan     index ${ev.j}, value=${ev.data[ev.j]}`);
+          break;
+
+        case 'move-left':
+          draw(ev.data, {
+            range: ev.range,
+            pivotIndex: ev.pivotIndex,
+            boundary: ev.boundary,
+            swap: { i: ev.i, j: ev.j },
+            fixed: ev.fixed
+          });
+          $('message').innerHTML = `因為值 ≤ pivot，把它放進左側區域。左側邊界現在移到索引 <strong>${ev.boundary}</strong>。`;
+          log(`move left index ${ev.j} -> left zone, boundary=${ev.boundary}`);
+          break;
+
+        case 'pivot-place':
+          draw(ev.data, {
+            range: ev.range,
+            pivotIndex: ev.pivotIndex,
+            boundary: ev.boundary,
+            swap: { i: ev.p, j: ev.r },
+            fixed: ev.fixed
+          });
+          $('message').innerHTML = `把 pivot 放到正確位置索引 <strong>${ev.p}</strong>。現在 pivot 左邊都 ≤ 它，右邊都 > 它。`;
+          log(`pivot placed at index ${ev.p}`);
+          break;
+
+        case 'fixed-single':
+          draw(ev.data, {
+            range: ev.range,
+            pivotIndex: ev.pivotIndex,
+            fixed: ev.fixed
+          });
+          $('message').innerHTML = `區段 <strong>[${ev.l}..${ev.r}]</strong> 只剩一個元素，直接視為已就位。`;
+          log(`single fixed index ${ev.l}`);
+          break;
+
+        case 'done':
+          draw(ev.data, { fixed: ev.fixed });
+          $('message').innerHTML = `排序完成。最終結果：<strong>[ ${ev.data.join(', ')} ]</strong>`;
+          log(`[done] ${ev.data.join(', ')}`);
+          stopRun();
+          $('stepBtn').disabled = true;
+          break;
+      }
+    }
+
+    function nextStep() {
+      if (ptr >= events.length) {
+        stopRun();
+        return;
+      }
+      apply(events[ptr++]);
+      if (ptr >= events.length) {
+        stopRun();
+        $('stepBtn').disabled = true;
+      }
+    }
+
+    function run() {
+      if (ptr >= events.length) return;
+      $('runBtn').disabled = true;
+      $('stopBtn').disabled = false;
+      $('stepBtn').disabled = true;
+      $('resetBtn').disabled = true;
+      $('randomBtn').disabled = true;
+
+      const tick = () => {
+        nextStep();
+        if (ptr < events.length) timer = setTimeout(tick, Number($('speed').value));
+      };
+      tick();
+    }
+
+    function stopRun() {
+      clearTimeout(timer);
+      timer = null;
+      $('runBtn').disabled = ptr >= events.length;
+      $('stopBtn').disabled = true;
+      $('stepBtn').disabled = ptr >= events.length;
+      $('resetBtn').disabled = false;
+      $('randomBtn').disabled = false;
+    }
+
+    function setup() {
+      stopRun();
+      base = parseNumbers();
+      if (base.length < 2) {
+        alert('請輸入至少兩個 1~999 的整數');
+        return;
+      }
+      events = buildQuickEvents(base);
+      ptr = 0;
+      fixedSet = new Set();
+      $('log').textContent = '[log] Ready.';
+      draw(base, { fixed: [] });
+      updateBoard(null, null, [], [], base);
+      $('message').textContent = '資料已載入。Quick sort 會選 pivot，先做 partition，再遞迴處理左右區段。';
+      setStats(base.length, { cmp: 0, swp: 0, part: 0 });
+      $('stepBtn').disabled = false;
+    }
+
+    $('speed').addEventListener('input', (e) => {
+      $('speedText').textContent = `${e.target.value} ms`;
+    });
+
+    $('resetBtn').addEventListener('click', setup);
+    $('randomBtn').addEventListener('click', randomData);
+    $('runBtn').addEventListener('click', run);
+    $('stopBtn').addEventListener('click', stopRun);
+    $('stepBtn').addEventListener('click', () => {
+      stopRun();
+      nextStep();
+    });
+
+    setup();
+  </script>
+</body>
+</html>

@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Merge Sort Flow</title>
+  <style>
+    :root {
+      --bg: #08111d;
+      --panel: #131d2f;
+      --panel-2: #0c1525;
+      --line: #263754;
+      --text: #e7efff;
+      --muted: #9cb0d4;
+      --main: #56b6ff;
+      --split: #ffd166;
+      --left: #6ee7b7;
+      --right: #a78bfa;
+      --merge: #ff7b91;
+      --done: #59d98d;
+      --shadow: 0 18px 42px rgba(0,0,0,.28);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, "Microsoft JhengHei", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(86,182,255,.15), transparent 24%),
+        radial-gradient(circle at bottom right, rgba(167,139,250,.12), transparent 24%),
+        var(--bg);
+    }
+
+    .wrap {
+      width: min(1160px, calc(100% - 32px));
+      margin: 28px auto 42px;
+    }
+
+    .hero, .panel {
+      background: rgba(19,29,47,.95);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      padding: 28px;
+      background: linear-gradient(135deg, rgba(86,182,255,.16), rgba(167,139,250,.10));
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(1.9rem, 3vw, 2.8rem);
+      letter-spacing: .04em;
+    }
+
+    .hero p {
+      margin: 12px 0 0;
+      max-width: 860px;
+      color: var(--muted);
+      line-height: 1.85;
+    }
+
+    .grid {
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap: 20px;
+    }
+
+    .panel { padding: 22px; }
+    .panel h2 {
+      margin: 0 0 16px;
+      font-size: 1.08rem;
+      letter-spacing: .03em;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      min-width: 240px;
+      border: 1px solid #334a6f;
+      border-radius: 12px;
+      background: #0a1322;
+      color: var(--text);
+      padding: 12px 14px;
+      font-size: .95rem;
+      outline: none;
+    }
+
+    input[type="range"] {
+      width: 190px;
+      accent-color: var(--main);
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 11px 16px;
+      font-size: .94rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .12s ease, opacity .18s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+    .btn-main { background: var(--main); color: white; }
+    .btn-sub { background: #253556; color: var(--text); }
+    .btn-good { background: var(--done); color: #072514; }
+    .btn-stop { background: var(--merge); color: #310a12; }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    .viz {
+      margin-top: 14px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+      padding: 18px 16px 12px;
+    }
+
+    .bars {
+      height: 330px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 8px 4px;
+    }
+
+    .node {
+      min-width: 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+      flex-shrink: 0;
+    }
+
+    .num {
+      font-size: .82rem;
+      font-weight: 700;
+      color: #d9e6ff;
+    }
+
+    .bar {
+      width: 48px;
+      border-radius: 14px 14px 6px 6px;
+      background: linear-gradient(180deg, var(--main), #3478d3);
+      transition: height .2s ease, transform .18s ease, filter .18s ease;
+      position: relative;
+      box-shadow: inset 0 -8px 16px rgba(0,0,0,.12);
+    }
+
+    .bar::after {
+      content: "";
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      top: 8px;
+      height: 22%;
+      border-radius: 999px;
+      background: rgba(255,255,255,.12);
+    }
+
+    .bar.split { background: linear-gradient(180deg, var(--split), #f4b637); transform: translateY(-5px); }
+    .bar.left  { background: linear-gradient(180deg, var(--left), #30b983); }
+    .bar.right { background: linear-gradient(180deg, var(--right), #7b63dd); }
+    .bar.merge { background: linear-gradient(180deg, var(--merge), #ef5d78); transform: translateY(-7px); }
+    .bar.done  { background: linear-gradient(180deg, var(--done), #35b96d); }
+
+    .idx {
+      color: #7589ae;
+      font-size: .75rem;
+    }
+
+    .msg {
+      margin-top: 16px;
+      background: #0a1322;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 16px;
+      min-height: 64px;
+      line-height: 1.8;
+      color: #dbe8ff;
+    }
+
+    .legend {
+      margin-top: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .stat, .box {
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+    }
+
+    .stat .k {
+      font-size: .84rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .stat .v {
+      font-size: 1.6rem;
+      font-weight: 800;
+    }
+
+    .box ul {
+      margin: 0;
+      padding-left: 20px;
+      color: var(--muted);
+      line-height: 1.9;
+    }
+
+    .log {
+      height: 250px;
+      overflow: auto;
+      white-space: pre-wrap;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: .84rem;
+      color: #c3d3f8;
+      line-height: 1.8;
+    }
+
+    .segment-board {
+      margin-top: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .segment-card {
+      background: #0a1322;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 14px;
+      color: var(--muted);
+      line-height: 1.8;
+      font-size: .9rem;
+    }
+
+    .segment-card strong { color: var(--text); }
+
+    .complexity {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .complexity th,
+    .complexity td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+    }
+
+    .complexity th {
+      background: #0a1322;
+      color: #d0e0ff;
+    }
+
+    .complexity td { color: var(--muted); }
+
+    .note {
+      margin-top: 14px;
+      color: #7f95bc;
+      line-height: 1.8;
+      font-size: .92rem;
+    }
+
+    @media (max-width: 940px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 640px) {
+      .wrap { width: min(100% - 20px, 1000px); }
+      .hero, .panel { padding: 18px; }
+      .bar, .node { width: 40px; min-width: 40px; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <h1>Merge Sort Flow</h1>
+      <p>
+        這版是合併排序。它和前面三種不一樣，核心不是在原陣列上一路交換，
+        而是先把資料<strong>拆分（divide）</strong>成更小區段，直到每段只剩一個元素，
+        再把左右兩段依序<strong>合併（merge）</strong>回去。真正的重點在於「分割結構」與「合併過程」。
+      </p>
+    </section>
+
+    <section class="grid">
+      <section class="panel">
+        <h2>互動視覺化</h2>
+        <div class="row">
+          <input id="numbers" type="text" value="38, 27, 43, 3, 9, 82, 10" />
+          <button id="resetBtn" class="btn-main">重設</button>
+          <button id="randomBtn" class="btn-sub">隨機資料</button>
+        </div>
+        <div class="row">
+          <span class="tag">速度 <strong id="speedText">700 ms</strong></span>
+          <input id="speed" type="range" min="180" max="1300" value="700" step="50" />
+          <button id="runBtn" class="btn-good">開始</button>
+          <button id="stopBtn" class="btn-stop" disabled>停止</button>
+          <button id="stepBtn" class="btn-sub">單步</button>
+        </div>
+
+        <div class="viz">
+          <div id="bars" class="bars"></div>
+          <div id="message" class="msg">Merge sort 會先遞迴拆分，再把左右子陣列合併回去。</div>
+          <div class="legend">
+            <span class="tag"><span class="dot" style="background: var(--split)"></span> 正在拆分區段</span>
+            <span class="tag"><span class="dot" style="background: var(--left)"></span> 左半段</span>
+            <span class="tag"><span class="dot" style="background: var(--right)"></span> 右半段</span>
+            <span class="tag"><span class="dot" style="background: var(--merge)"></span> 合併寫回</span>
+            <span class="tag"><span class="dot" style="background: var(--done)"></span> 最終完成</span>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <h2>狀態資訊</h2>
+        <div class="stats">
+          <div class="stat"><div class="k">資料筆數</div><div class="v" id="nStat">0</div></div>
+          <div class="stat"><div class="k">拆分次數</div><div class="v" id="splitStat">0</div></div>
+          <div class="stat"><div class="k">合併次數</div><div class="v" id="mergeStat">0</div></div>
+          <div class="stat"><div class="k">寫回次數</div><div class="v" id="writeStat">0</div></div>
+        </div>
+
+        <div class="segment-board" id="segmentBoard">
+          <div class="segment-card">左半段：<strong>-</strong></div>
+          <div class="segment-card">右半段：<strong>-</strong></div>
+          <div class="segment-card">目前合併結果：<strong>-</strong></div>
+        </div>
+
+        <div style="height:14px"></div>
+        <div class="box">
+          <ul>
+            <li>先把陣列切成左半與右半。</li>
+            <li>兩邊各自繼續切，直到單一元素。</li>
+            <li>接著比較左右子陣列的前端元素。</li>
+            <li>較小者先寫入新陣列，再繼續比較。</li>
+            <li>最後把排序好的結果寫回原區段。</li>
+          </ul>
+        </div>
+
+        <div style="height:14px"></div>
+        <div id="log" class="box log">[log] Ready.</div>
+      </aside>
+    </section>
+
+    <section class="panel" style="margin-top:20px;">
+      <h2>複雜度摘要</h2>
+      <table class="complexity">
+        <thead>
+          <tr>
+            <th>情況</th>
+            <th>時間</th>
+            <th>說明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Best Case</td>
+            <td>O(n log n)</td>
+            <td>拆分層數固定，合併時仍需線性處理元素。</td>
+          </tr>
+          <tr>
+            <td>Average Case</td>
+            <td>O(n log n)</td>
+            <td>分治法的典型效率。</td>
+          </tr>
+          <tr>
+            <td>Worst Case</td>
+            <td>O(n log n)</td>
+            <td>比起 bubble / insertion / selection，規模變大時通常更穩定。</td>
+          </tr>
+          <tr>
+            <td>Space</td>
+            <td>O(n)</td>
+            <td>需要額外暫存陣列來做 merge。</td>
+          </tr>
+          <tr>
+            <td>Stability</td>
+            <td>穩定</td>
+            <td>相等元素可保留相對順序。</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="note">
+        這份程式故意把 merge sort 的流程拆成 <strong>split / base / merge-start / compare / write / merge-end / done</strong>，
+        讓你看得出來這不是交換型排序，而是典型的 divide and conquer。
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    let base = [];
+    let events = [];
+    let ptr = 0;
+    let timer = null;
+
+    function parseNumbers() {
+      return $('numbers').value
+        .split(/[，,\s]+/)
+        .map(v => Number(v))
+        .filter(v => Number.isFinite(v) && v >= 1 && v <= 999);
+    }
+
+    function randomData() {
+      const len = Math.floor(Math.random() * 6) + 7;
+      const arr = Array.from({ length: len }, () => Math.floor(Math.random() * 90) + 10);
+      $('numbers').value = arr.join(', ');
+      setup();
+    }
+
+    function buildMergeEvents(arr) {
+      const a = [...arr];
+      const out = [];
+      const stats = { split: 0, merge: 0, write: 0 };
+
+      function sort(l, r, depth = 0) {
+        if (l === r) {
+          out.push({
+            type: 'base', l, r, depth,
+            data: [...a],
+            stats: { ...stats },
+            leftSeg: a.slice(l, r + 1),
+            rightSeg: [],
+            mergedSeg: a.slice(l, r + 1)
+          });
+          return;
+        }
+
+        const mid = Math.floor((l + r) / 2);
+        stats.split++;
+        out.push({
+          type: 'split', l, r, mid, depth,
+          data: [...a],
+          stats: { ...stats },
+          leftSeg: a.slice(l, mid + 1),
+          rightSeg: a.slice(mid + 1, r + 1),
+          mergedSeg: []
+        });
+
+        sort(l, mid, depth + 1);
+        sort(mid + 1, r, depth + 1);
+
+        const left = a.slice(l, mid + 1);
+        const right = a.slice(mid + 1, r + 1);
+        let i = 0, j = 0, k = l;
+        const merged = [];
+
+        stats.merge++;
+        out.push({
+          type: 'merge-start', l, r, mid, depth,
+          data: [...a],
+          stats: { ...stats },
+          leftSeg: [...left],
+          rightSeg: [...right],
+          mergedSeg: []
+        });
+
+        while (i < left.length && j < right.length) {
+          out.push({
+            type: 'compare', l, r, mid, depth,
+            data: [...a],
+            stats: { ...stats },
+            compareLeft: left[i],
+            compareRight: right[j],
+            leftSeg: [...left.slice(i)],
+            rightSeg: [...right.slice(j)],
+            mergedSeg: [...merged]
+          });
+
+          if (left[i] <= right[j]) {
+            a[k] = left[i];
+            merged.push(left[i]);
+            i++;
+          } else {
+            a[k] = right[j];
+            merged.push(right[j]);
+            j++;
+          }
+          stats.write++;
+          out.push({
+            type: 'write', l, r, pos: k, depth,
+            data: [...a],
+            stats: { ...stats },
+            leftSeg: [...left.slice(i)],
+            rightSeg: [...right.slice(j)],
+            mergedSeg: [...merged]
+          });
+          k++;
+        }
+
+        while (i < left.length) {
+          a[k] = left[i];
+          merged.push(left[i]);
+          i++;
+          stats.write++;
+          out.push({
+            type: 'write', l, r, pos: k, depth,
+            data: [...a],
+            stats: { ...stats },
+            leftSeg: [...left.slice(i)],
+            rightSeg: [...right.slice(j)],
+            mergedSeg: [...merged]
+          });
+          k++;
+        }
+
+        while (j < right.length) {
+          a[k] = right[j];
+          merged.push(right[j]);
+          j++;
+          stats.write++;
+          out.push({
+            type: 'write', l, r, pos: k, depth,
+            data: [...a],
+            stats: { ...stats },
+            leftSeg: [...left.slice(i)],
+            rightSeg: [...right.slice(j)],
+            mergedSeg: [...merged]
+          });
+          k++;
+        }
+
+        out.push({
+          type: 'merge-end', l, r, mid, depth,
+          data: [...a],
+          stats: { ...stats },
+          leftSeg: [],
+          rightSeg: [],
+          mergedSeg: [...merged]
+        });
+      }
+
+      sort(0, a.length - 1, 0);
+      out.push({
+        type: 'done',
+        data: [...a],
+        stats: { ...stats },
+        leftSeg: [],
+        rightSeg: [],
+        mergedSeg: [...a]
+      });
+      return out;
+    }
+
+    function inRange(idx, l, r) {
+      return l != null && r != null && idx >= l && idx <= r;
+    }
+
+    function draw(data, marks = {}) {
+      const area = $('bars');
+      area.innerHTML = '';
+      const max = Math.max(...data, 1);
+
+      data.forEach((num, idx) => {
+        const node = document.createElement('div');
+        node.className = 'node';
+
+        const numEl = document.createElement('div');
+        numEl.className = 'num';
+        numEl.textContent = num;
+
+        const bar = document.createElement('div');
+        bar.className = 'bar';
+        bar.style.height = `${Math.max(26, Math.round((num / max) * 245))}px`;
+
+        if (marks.doneAll) {
+          bar.classList.add('done');
+        } else {
+          if (marks.splitRange && inRange(idx, marks.splitRange.l, marks.splitRange.r)) bar.classList.add('split');
+          if (marks.leftRange && inRange(idx, marks.leftRange.l, marks.leftRange.r)) bar.classList.add('left');
+          if (marks.rightRange && inRange(idx, marks.rightRange.l, marks.rightRange.r)) bar.classList.add('right');
+          if (marks.mergeRange && inRange(idx, marks.mergeRange.l, marks.mergeRange.r)) bar.classList.add('merge');
+        }
+
+        const idxEl = document.createElement('div');
+        idxEl.className = 'idx';
+        idxEl.textContent = idx;
+
+        node.appendChild(numEl);
+        node.appendChild(bar);
+        node.appendChild(idxEl);
+        area.appendChild(node);
+      });
+    }
+
+    function updateSegmentBoard(leftSeg, rightSeg, mergedSeg) {
+      const board = $('segmentBoard');
+      board.innerHTML = `
+        <div class="segment-card">左半段：<strong>${leftSeg.length ? '[ ' + leftSeg.join(', ') + ' ]' : '-'}</strong></div>
+        <div class="segment-card">右半段：<strong>${rightSeg.length ? '[ ' + rightSeg.join(', ') + ' ]' : '-'}</strong></div>
+        <div class="segment-card">目前合併結果：<strong>${mergedSeg.length ? '[ ' + mergedSeg.join(', ') + ' ]' : '-'}</strong></div>
+      `;
+    }
+
+    function log(text) {
+      const box = $('log');
+      box.textContent += `\n${text}`;
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function setStats(n, stats) {
+      $('nStat').textContent = n;
+      $('splitStat').textContent = stats.split;
+      $('mergeStat').textContent = stats.merge;
+      $('writeStat').textContent = stats.write;
+    }
+
+    function apply(ev) {
+      const n = base.length;
+      setStats(n, ev.stats || { split: 0, merge: 0, write: 0 });
+      updateSegmentBoard(ev.leftSeg || [], ev.rightSeg || [], ev.mergedSeg || []);
+
+      switch (ev.type) {
+        case 'split':
+          draw(ev.data, {
+            splitRange: { l: ev.l, r: ev.r },
+            leftRange: { l: ev.l, r: ev.mid },
+            rightRange: { l: ev.mid + 1, r: ev.r }
+          });
+          $('message').innerHTML = `拆分區段 <strong>[${ev.l}..${ev.r}]</strong>，切成左半 <strong>[${ev.l}..${ev.mid}]</strong> 與右半 <strong>[${ev.mid + 1}..${ev.r}]</strong>。`;
+          log(`split    [${ev.l}..${ev.r}] -> [${ev.l}..${ev.mid}] + [${ev.mid + 1}..${ev.r}]`);
+          break;
+
+        case 'base':
+          draw(ev.data, { splitRange: { l: ev.l, r: ev.r } });
+          $('message').innerHTML = `區段 <strong>[${ev.l}..${ev.r}]</strong> 只剩一個元素，視為已排序基底。`;
+          log(`base     [${ev.l}..${ev.r}]`);
+          break;
+
+        case 'merge-start':
+          draw(ev.data, {
+            leftRange: { l: ev.l, r: ev.mid },
+            rightRange: { l: ev.mid + 1, r: ev.r },
+            mergeRange: { l: ev.l, r: ev.r }
+          });
+          $('message').innerHTML = `開始合併區段 <strong>[${ev.l}..${ev.mid}]</strong> 與 <strong>[${ev.mid + 1}..${ev.r}]</strong>。`;
+          log(`merge    start [${ev.l}..${ev.r}]`);
+          break;
+
+        case 'compare':
+          draw(ev.data, { mergeRange: { l: ev.l, r: ev.r } });
+          $('message').innerHTML = `比較左右兩邊前端值：<strong>${ev.compareLeft}</strong> 與 <strong>${ev.compareRight}</strong>，較小者先寫入。`;
+          log(`compare  ${ev.compareLeft} vs ${ev.compareRight}`);
+          break;
+
+        case 'write':
+          draw(ev.data, { mergeRange: { l: ev.l, r: ev.r } });
+          $('message').innerHTML = `把較小元素寫回索引 <strong>${ev.pos}</strong>，目前合併結果為 <strong>[ ${ev.mergedSeg.join(', ')} ]</strong>。`;
+          log(`write    index ${ev.pos} -> [${ev.mergedSeg.join(', ')}]`);
+          break;
+
+        case 'merge-end':
+          draw(ev.data, { mergeRange: { l: ev.l, r: ev.r } });
+          $('message').innerHTML = `區段 <strong>[${ev.l}..${ev.r}]</strong> 合併完成，結果為 <strong>[ ${ev.mergedSeg.join(', ')} ]</strong>。`;
+          log(`merged   [${ev.l}..${ev.r}] = [${ev.mergedSeg.join(', ')}]`);
+          break;
+
+        case 'done':
+          draw(ev.data, { doneAll: true });
+          $('message').innerHTML = `排序完成。最終結果：<strong>[ ${ev.data.join(', ')} ]</strong>`;
+          log(`[done] ${ev.data.join(', ')}`);
+          stopRun();
+          $('stepBtn').disabled = true;
+          break;
+      }
+    }
+
+    function nextStep() {
+      if (ptr >= events.length) {
+        stopRun();
+        return;
+      }
+      apply(events[ptr++]);
+      if (ptr >= events.length) {
+        stopRun();
+        $('stepBtn').disabled = true;
+      }
+    }
+
+    function run() {
+      if (ptr >= events.length) return;
+      $('runBtn').disabled = true;
+      $('stopBtn').disabled = false;
+      $('stepBtn').disabled = true;
+      $('resetBtn').disabled = true;
+      $('randomBtn').disabled = true;
+
+      const tick = () => {
+        nextStep();
+        if (ptr < events.length) timer = setTimeout(tick, Number($('speed').value));
+      };
+      tick();
+    }
+
+    function stopRun() {
+      clearTimeout(timer);
+      timer = null;
+      $('runBtn').disabled = ptr >= events.length;
+      $('stopBtn').disabled = true;
+      $('stepBtn').disabled = ptr >= events.length;
+      $('resetBtn').disabled = false;
+      $('randomBtn').disabled = false;
+    }
+
+    function setup() {
+      stopRun();
+      base = parseNumbers();
+      if (base.length < 2) {
+        alert('請輸入至少兩個 1~999 的整數');
+        return;
+      }
+      events = buildMergeEvents(base);
+      ptr = 0;
+      $('log').textContent = '[log] Ready.';
+      draw(base, {});
+      updateSegmentBoard([], [], []);
+      $('message').textContent = '資料已載入。Merge sort 會先拆分，再把小區段逐步合併回來。';
+      setStats(base.length, { split: 0, merge: 0, write: 0 });
+      $('stepBtn').disabled = false;
+    }
+
+    $('speed').addEventListener('input', (e) => {
+      $('speedText').textContent = `${e.target.value} ms`;
+    });
+
+    $('resetBtn').addEventListener('click', setup);
+    $('randomBtn').addEventListener('click', randomData);
+    $('runBtn').addEventListener('click', run);
+    $('stopBtn').addEventListener('click', stopRun);
+    $('stepBtn').addEventListener('click', () => {
+      stopRun();
+      nextStep();
+    });
+
+    setup();
+  </script>
+</body>
+</html>
