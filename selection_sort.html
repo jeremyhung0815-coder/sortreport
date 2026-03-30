@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Selection Sort Deck</title>
+  <style>
+    :root {
+      --bg: #0a1220;
+      --panel: #131d31;
+      --panel-2: #0d1628;
+      --line: #273552;
+      --text: #e8efff;
+      --muted: #9db0d4;
+      --main: #5ea8ff;
+      --main-2: #3c7dde;
+      --scan: #ffd166;
+      --min: #a78bfa;
+      --swap: #ff7b8f;
+      --sorted: #59d98d;
+      --shadow: 0 18px 42px rgba(0,0,0,.28);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, "Microsoft JhengHei", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(94,168,255,.14), transparent 26%),
+        radial-gradient(circle at bottom right, rgba(167,139,250,.12), transparent 24%),
+        var(--bg);
+    }
+
+    .wrap {
+      width: min(1140px, calc(100% - 32px));
+      margin: 28px auto 40px;
+    }
+
+    .hero, .panel {
+      background: rgba(19,29,49,.95);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      padding: 28px;
+      background: linear-gradient(135deg, rgba(94,168,255,.17), rgba(167,139,250,.10));
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(1.9rem, 3vw, 2.7rem);
+      letter-spacing: .04em;
+    }
+
+    .hero p {
+      margin: 12px 0 0;
+      max-width: 820px;
+      color: var(--muted);
+      line-height: 1.85;
+    }
+
+    .grid {
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 20px;
+    }
+
+    .panel { padding: 22px; }
+    .panel h2 {
+      margin: 0 0 16px;
+      font-size: 1.08rem;
+      letter-spacing: .03em;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      min-width: 230px;
+      border: 1px solid #33476b;
+      border-radius: 12px;
+      background: #0a1323;
+      color: var(--text);
+      padding: 12px 14px;
+      font-size: .95rem;
+      outline: none;
+    }
+
+    input[type="range"] {
+      width: 190px;
+      accent-color: var(--main);
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 11px 16px;
+      font-size: .94rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .12s ease, opacity .18s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+    .btn-main { background: var(--main); color: white; }
+    .btn-sub { background: #253556; color: var(--text); }
+    .btn-good { background: var(--sorted); color: #072514; }
+    .btn-stop { background: var(--swap); color: #2f0910; }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    .viz {
+      margin-top: 14px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+      padding: 18px 16px 12px;
+    }
+
+    .bars {
+      height: 340px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 8px 4px;
+    }
+
+    .node {
+      min-width: 50px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+      flex-shrink: 0;
+    }
+
+    .num {
+      font-size: .82rem;
+      font-weight: 700;
+      color: #d9e6ff;
+    }
+
+    .bar {
+      width: 50px;
+      border-radius: 14px 14px 6px 6px;
+      background: linear-gradient(180deg, var(--main), var(--main-2));
+      transition: height .2s ease, transform .18s ease, filter .18s ease;
+      position: relative;
+      box-shadow: inset 0 -8px 16px rgba(0,0,0,.12);
+    }
+
+    .bar::after {
+      content: "";
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      top: 8px;
+      height: 22%;
+      border-radius: 999px;
+      background: rgba(255,255,255,.12);
+    }
+
+    .bar.scan {
+      background: linear-gradient(180deg, var(--scan), #f3b639);
+      transform: translateY(-4px);
+    }
+
+    .bar.min {
+      background: linear-gradient(180deg, var(--min), #7c63dd);
+      transform: translateY(-7px);
+    }
+
+    .bar.swap {
+      background: linear-gradient(180deg, var(--swap), #ee5d76);
+      transform: translateY(-8px);
+    }
+
+    .bar.sorted {
+      background: linear-gradient(180deg, var(--sorted), #34b96d);
+    }
+
+    .idx {
+      color: #7588ad;
+      font-size: .75rem;
+    }
+
+    .msg {
+      margin-top: 16px;
+      background: #0a1323;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 16px;
+      min-height: 60px;
+      line-height: 1.8;
+      color: #dbe8ff;
+    }
+
+    .legend {
+      margin-top: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .stat, .box {
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+    }
+
+    .stat .k {
+      font-size: .84rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .stat .v {
+      font-size: 1.6rem;
+      font-weight: 800;
+    }
+
+    .box ul {
+      margin: 0;
+      padding-left: 20px;
+      color: var(--muted);
+      line-height: 1.9;
+    }
+
+    .log {
+      height: 250px;
+      overflow: auto;
+      white-space: pre-wrap;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: .84rem;
+      color: #c3d3f8;
+      line-height: 1.8;
+    }
+
+    .complexity {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .complexity th,
+    .complexity td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+    }
+
+    .complexity th {
+      background: #0a1323;
+      color: #d0e0ff;
+    }
+
+    .complexity td { color: var(--muted); }
+
+    .note {
+      margin-top: 14px;
+      color: #7f95bc;
+      line-height: 1.8;
+      font-size: .92rem;
+    }
+
+    @media (max-width: 930px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 640px) {
+      .wrap { width: min(100% - 20px, 1000px); }
+      .hero, .panel { padding: 18px; }
+      .bar, .node { width: 40px; min-width: 40px; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <h1>Selection Sort Deck</h1>
+      <p>
+        這版是 selection sort。它的節奏和 bubble / insertion 不同：
+        每一回合先固定一個起點，然後在右側未排序區中一路掃描，找出 <strong>最小值的位置</strong>，
+        最後再和目前回合的起點交換。重點不是一直相鄰交換，而是「先找最小，再一次換位」。
+      </p>
+    </section>
+
+    <section class="grid">
+      <section class="panel">
+        <h2>互動視覺化</h2>
+        <div class="row">
+          <input id="numbers" type="text" value="31, 14, 56, 8, 22, 17, 9" />
+          <button id="resetBtn" class="btn-main">重設</button>
+          <button id="randomBtn" class="btn-sub">隨機資料</button>
+        </div>
+        <div class="row">
+          <span class="tag">速度 <strong id="speedText">650 ms</strong></span>
+          <input id="speed" type="range" min="150" max="1200" value="650" step="50" />
+          <button id="runBtn" class="btn-good">開始</button>
+          <button id="stopBtn" class="btn-stop" disabled>停止</button>
+          <button id="stepBtn" class="btn-sub">單步</button>
+        </div>
+
+        <div class="viz">
+          <div id="bars" class="bars"></div>
+          <div id="message" class="msg">Selection sort 每回合會在未排序區中找出最小值，再把它換到前面。</div>
+          <div class="legend">
+            <span class="tag"><span class="dot" style="background: var(--scan)"></span> 正在掃描</span>
+            <span class="tag"><span class="dot" style="background: var(--min)"></span> 目前最小值</span>
+            <span class="tag"><span class="dot" style="background: var(--swap)"></span> 交換中</span>
+            <span class="tag"><span class="dot" style="background: var(--sorted)"></span> 已排序區</span>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <h2>狀態資訊</h2>
+        <div class="stats">
+          <div class="stat"><div class="k">資料筆數</div><div class="v" id="nStat">0</div></div>
+          <div class="stat"><div class="k">比較次數</div><div class="v" id="cmpStat">0</div></div>
+          <div class="stat"><div class="k">交換次數</div><div class="v" id="swapStat">0</div></div>
+          <div class="stat"><div class="k">已完成回合</div><div class="v" id="roundStat">0</div></div>
+        </div>
+
+        <div style="height:14px"></div>
+        <div class="box">
+          <ul>
+            <li>第 i 回合，先假設 i 就是最小值位置。</li>
+            <li>從 i+1 開始一路掃描右側。</li>
+            <li>只要找到更小的值，就更新最小值索引。</li>
+            <li>整輪掃描結束後，再和 i 做一次交換。</li>
+            <li>因此 selection sort 的交換次數通常不多，但比較次數固定偏多。</li>
+          </ul>
+        </div>
+
+        <div style="height:14px"></div>
+        <div id="log" class="box log">[log] Ready.</div>
+      </aside>
+    </section>
+
+    <section class="panel" style="margin-top:20px;">
+      <h2>複雜度摘要</h2>
+      <table class="complexity">
+        <thead>
+          <tr>
+            <th>情況</th>
+            <th>時間</th>
+            <th>說明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Best Case</td>
+            <td>O(n²)</td>
+            <td>即使幾乎有序，也還是要掃描剩餘元素找最小值。</td>
+          </tr>
+          <tr>
+            <td>Average Case</td>
+            <td>O(n²)</td>
+            <td>每回合都要做線性搜尋。</td>
+          </tr>
+          <tr>
+            <td>Worst Case</td>
+            <td>O(n²)</td>
+            <td>比較次數與一般情況差不多，主要差在交換結果。</td>
+          </tr>
+          <tr>
+            <td>Space</td>
+            <td>O(1)</td>
+            <td>原地排序。</td>
+          </tr>
+          <tr>
+            <td>Stability</td>
+            <td>通常不穩定</td>
+            <td>因為直接交換可能改變相同元素的相對順序。</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="note">
+        這份程式把事件拆成 <strong>round-start / scan / new-min / swap / round-end / done</strong>，
+        讓 selection sort「搜尋最小值」的特徵更明顯，和前兩個排序的動畫邏輯有清楚區隔。
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    let base = [];
+    let events = [];
+    let ptr = 0;
+    let timer = null;
+
+    function parseNumbers() {
+      return $('numbers').value
+        .split(/[，,\s]+/)
+        .map(v => Number(v))
+        .filter(v => Number.isFinite(v) && v >= 1 && v <= 999);
+    }
+
+    function randomData() {
+      const len = Math.floor(Math.random() * 6) + 7;
+      const arr = Array.from({ length: len }, () => Math.floor(Math.random() * 90) + 10);
+      $('numbers').value = arr.join(', ');
+      setup();
+    }
+
+    function buildEvents(arr) {
+      const a = [...arr];
+      const out = [];
+      let cmp = 0;
+      let swp = 0;
+
+      for (let i = 0; i < a.length - 1; i++) {
+        let minIndex = i;
+        out.push({ type: 'round-start', round: i + 1, start: i, minIndex, data: [...a], sortedEnd: i - 1, cmp, swp });
+
+        for (let j = i + 1; j < a.length; j++) {
+          cmp++;
+          out.push({ type: 'scan', round: i + 1, start: i, scanIndex: j, minIndex, data: [...a], sortedEnd: i - 1, cmp, swp });
+
+          if (a[j] < a[minIndex]) {
+            minIndex = j;
+            out.push({ type: 'new-min', round: i + 1, start: i, scanIndex: j, minIndex, data: [...a], sortedEnd: i - 1, cmp, swp });
+          }
+        }
+
+        if (minIndex !== i) {
+          [a[i], a[minIndex]] = [a[minIndex], a[i]];
+          swp++;
+          out.push({ type: 'swap', round: i + 1, left: i, right: minIndex, minIndex: i, data: [...a], sortedEnd: i, cmp, swp });
+        } else {
+          out.push({ type: 'swap-skip', round: i + 1, pos: i, data: [...a], sortedEnd: i, cmp, swp });
+        }
+
+        out.push({ type: 'round-end', round: i + 1, fixed: i, data: [...a], sortedEnd: i, cmp, swp });
+      }
+
+      out.push({ type: 'done', data: [...a], sortedEnd: a.length - 1, cmp, swp, round: a.length - 1 });
+      return out;
+    }
+
+    function draw(data, marks = {}, sortedEnd = -1) {
+      const area = $('bars');
+      area.innerHTML = '';
+      const max = Math.max(...data, 1);
+
+      data.forEach((num, idx) => {
+        const node = document.createElement('div');
+        node.className = 'node';
+
+        const numEl = document.createElement('div');
+        numEl.className = 'num';
+        numEl.textContent = num;
+
+        const bar = document.createElement('div');
+        bar.className = 'bar';
+        bar.style.height = `${Math.max(26, Math.round((num / max) * 245))}px`;
+
+        if (idx <= sortedEnd) bar.classList.add('sorted');
+        if (marks.scan === idx) bar.classList.add('scan');
+        if (marks.min === idx) bar.classList.add('min');
+        if (marks.swap && (idx === marks.swap.left || idx === marks.swap.right)) bar.classList.add('swap');
+
+        const idxEl = document.createElement('div');
+        idxEl.className = 'idx';
+        idxEl.textContent = idx;
+
+        node.appendChild(numEl);
+        node.appendChild(bar);
+        node.appendChild(idxEl);
+        area.appendChild(node);
+      });
+    }
+
+    function log(text) {
+      const box = $('log');
+      box.textContent += `\n${text}`;
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function setStats({ n, cmp = 0, swp = 0, round = 0 }) {
+      $('nStat').textContent = n;
+      $('cmpStat').textContent = cmp;
+      $('swapStat').textContent = swp;
+      $('roundStat').textContent = round;
+    }
+
+    function apply(ev) {
+      const n = base.length;
+
+      switch (ev.type) {
+        case 'round-start':
+          draw(ev.data, { min: ev.minIndex }, ev.sortedEnd);
+          $('message').innerHTML = `第 <strong>${ev.round}</strong> 回合開始：先把索引 <strong>${ev.start}</strong> 視為目前最小值位置。`;
+          setStats({ n, cmp: ev.cmp, swp: ev.swp, round: ev.round - 1 });
+          log(`[round ${ev.round}] start at index ${ev.start}`);
+          break;
+
+        case 'scan':
+          draw(ev.data, { scan: ev.scanIndex, min: ev.minIndex }, ev.sortedEnd);
+          $('message').innerHTML = `掃描索引 <strong>${ev.scanIndex}</strong>，比較目前候選最小值 <strong>${ev.data[ev.minIndex]}</strong> 與掃描值 <strong>${ev.data[ev.scanIndex]}</strong>。`;
+          setStats({ n, cmp: ev.cmp, swp: ev.swp, round: ev.round - 1 });
+          log(`scan     index ${ev.scanIndex}, current min index ${ev.minIndex}`);
+          break;
+
+        case 'new-min':
+          draw(ev.data, { scan: ev.scanIndex, min: ev.minIndex }, ev.sortedEnd);
+          $('message').innerHTML = `找到更小的值，更新最小值索引為 <strong>${ev.minIndex}</strong>（值 = ${ev.data[ev.minIndex]}）。`;
+          setStats({ n, cmp: ev.cmp, swp: ev.swp, round: ev.round - 1 });
+          log(`new min  index ${ev.minIndex}, value ${ev.data[ev.minIndex]}`);
+          break;
+
+        case 'swap':
+          draw(ev.data, { swap: { left: ev.left, right: ev.right } }, ev.sortedEnd);
+          $('message').innerHTML = `掃描完成，把最小值換到前面：交換索引 <strong>${ev.left}</strong> 和 <strong>${ev.right}</strong>。`;
+          setStats({ n, cmp: ev.cmp, swp: ev.swp, round: ev.round - 1 });
+          log(`swap     index ${ev.left} <-> ${ev.right}`);
+          break;
+
+        case 'swap-skip':
+          draw(ev.data, {}, ev.sortedEnd);
+          $('message').innerHTML = `這一回合最小值本來就在起點位置，不需要交換。`;
+          setStats({ n, cmp: ev.cmp, swp: ev.swp, round: ev.round - 1 });
+          log(`swap skip at index ${ev.pos}`);
+          break;
+
+        case 'round-end':
+          draw(ev.data, {}, ev.sortedEnd);
+          $('message').innerHTML = `第 <strong>${ev.round}</strong> 回合完成，索引 <strong>${ev.fixed}</strong> 已固定為正確位置。`;
+          setStats({ n, cmp: ev.cmp, swp: ev.swp, round: ev.round });
+          log(`[round ${ev.round}] fixed index ${ev.fixed}`);
+          break;
+
+        case 'done':
+          draw(ev.data, {}, ev.sortedEnd);
+          $('message').innerHTML = `排序完成。最終結果：<strong>[ ${ev.data.join(', ')} ]</strong>`;
+          setStats({ n, cmp: ev.cmp, swp: ev.swp, round: ev.round });
+          log(`[done] compare=${ev.cmp}, swap=${ev.swp}`);
+          stopRun();
+          $('stepBtn').disabled = true;
+          break;
+      }
+    }
+
+    function nextStep() {
+      if (ptr >= events.length) {
+        stopRun();
+        return;
+      }
+      apply(events[ptr++]);
+      if (ptr >= events.length) {
+        stopRun();
+        $('stepBtn').disabled = true;
+      }
+    }
+
+    function run() {
+      if (ptr >= events.length) return;
+      $('runBtn').disabled = true;
+      $('stopBtn').disabled = false;
+      $('stepBtn').disabled = true;
+      $('resetBtn').disabled = true;
+      $('randomBtn').disabled = true;
+
+      const tick = () => {
+        nextStep();
+        if (ptr < events.length) timer = setTimeout(tick, Number($('speed').value));
+      };
+      tick();
+    }
+
+    function stopRun() {
+      clearTimeout(timer);
+      timer = null;
+      $('runBtn').disabled = ptr >= events.length;
+      $('stopBtn').disabled = true;
+      $('stepBtn').disabled = ptr >= events.length;
+      $('resetBtn').disabled = false;
+      $('randomBtn').disabled = false;
+    }
+
+    function setup() {
+      stopRun();
+      base = parseNumbers();
+      if (base.length < 2) {
+        alert('請輸入至少兩個 1~999 的整數');
+        return;
+      }
+      events = buildEvents(base);
+      ptr = 0;
+      $('log').textContent = '[log] Ready.';
+      draw(base, {}, -1);
+      $('message').textContent = '資料已載入。Selection sort 會在每回合從未排序區找出最小值，再放到前面。';
+      setStats({ n: base.length, cmp: 0, swp: 0, round: 0 });
+      $('stepBtn').disabled = false;
+    }
+
+    $('speed').addEventListener('input', (e) => {
+      $('speedText').textContent = `${e.target.value} ms`;
+    });
+
+    $('resetBtn').addEventListener('click', setup);
+    $('randomBtn').addEventListener('click', randomData);
+    $('runBtn').addEventListener('click', run);
+    $('stopBtn').addEventListener('click', stopRun);
+    $('stepBtn').addEventListener('click', () => {
+      stopRun();
+      nextStep();
+    });
+
+    setup();
+  </script>
+</body>
+</html>
