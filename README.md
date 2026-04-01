@@ -1,8 +1,7 @@
-<<<<<<< HEAD
 # 排序報告
 學號：11428101
 姓名：洪誠駿
-模擬頁面：[text](https://github.com/jeremyhung0815-coder/sortreport.git)
+模擬頁面：[排序法模擬頁連結](https://jeremyhung0815-coder.github.io/sortreport/)
 
 ## 氣泡排序法
 
@@ -35,6 +34,4 @@
 快速排序法（Quick Sort）同樣採用分治法。  
 它的做法是先選定一個基準值（pivot），再將資料重新分組，使得比基準值小的元素放在左邊，比基準值大的元素放在右邊。  
 接著再對左右兩邊子序列重複進行相同操作，直到所有資料排序完成。
-=======
-## 排序報告
->>>>>>> d493a566afbb1f8dd0740fde249cf048518ba202
+
